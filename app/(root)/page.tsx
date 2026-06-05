@@ -3,8 +3,17 @@ import React from 'react'
 import Link from 'next/link'
 import { dummyInterviews } from '@/constants'
 import InterviewCard from '@/components/InterviewCard'
+import { getCurrentUser, getInterviewsByUserId, getLatestInterviews } from '@/lib/action/auth.action'
 
-const page = () => {
+const page = async() => {
+  const user = await getCurrentUser();
+  const [interviews,latestInterviews]= await Promise.all(
+      [await getInterviewsByUserId(user?.id || ""),
+      await getLatestInterviews({userId:user?.id})]
+  )
+  console.log("interviews:",interviews);
+  const pastInterviews=interviews?.length>0;
+  const hasLatestInterviews=latestInterviews?.length>0;
   return (
     <>
     <section className="card-cta">
@@ -20,20 +29,30 @@ const page = () => {
     <section className="flex flex-col mt-8 gap-6">
       <h2> Your Interviews </h2>
           <div className="interviews-section">
-            {dummyInterviews.map((interview)=>(
-              <InterviewCard {...interview} key={interview.id}/>
-            ))}
-            {/* <p >you have not taken any interview yet?</p> */}
+            {pastInterviews?(
+              interviews.map((interview)=>(
+                <InterviewCard {...interview} key={interview.id}/>
+              ))
+            ):(
+              <p >you have not taken any interview yet?</p>
+            )
+            
+           }
+            
           </div>
     </section>
 
     <section className="flex flex-col gap-6 mt-8">
         <h2>Take an Interview</h2>
         <div className="interviews-section">
-          {dummyInterviews.map((interview)=>(
-              <InterviewCard {...interview} key={interview.id}/>
-            ))}
-          {/* <p>There are no interview avalible</p> */}
+          
+          {hasLatestInterviews ? (
+            latestInterviews.map((interview) => (
+              <InterviewCard {...interview} key={interview.id} />
+            ))
+          ) : (
+            <p>There are no interviews available.</p>
+          )}
         </div>
     </section>
     </>
