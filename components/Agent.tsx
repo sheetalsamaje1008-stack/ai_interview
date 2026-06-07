@@ -61,7 +61,7 @@ const Agent = ({ userName,userId,type }: AgentProps) => {
         vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,{
             variableValues:{
                 username:userName,
-                userid:userId
+                userid:userId,
             }
         })
     }
