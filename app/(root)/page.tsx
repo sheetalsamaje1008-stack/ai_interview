@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button'
 import React from 'react'
 import Link from 'next/link'
-import { dummyInterviews } from '@/constants'
 import InterviewCard from '@/components/InterviewCard'
 import { getCurrentUser, getInterviewsByUserId, getLatestInterviews } from '@/lib/action/auth.action'
 
