@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import {cn }from '@/lib/utils'
 import {vapi} from '@/lib/vapi.sdk'
 import { useRouter } from 'next/navigation'
+import { interviewer } from '@/constants'
 enum CallStatus {
     CONNECTING = "CONNECTING",
     INACTIVE = "INACTIVE",
@@ -15,11 +16,22 @@ interface SavedMessage{
     content:string,
 }
 
-const Agent = ({ userName,userId,type }: AgentProps) => {
+const Agent = ({ userName,userId,type,interviewId,questions}: AgentProps) => {
     const router = useRouter();
     const [isSpeaking, setisSpeaking] = useState(false)
     const [callStatus, setcallStauts] = useState<CallStatus>(CallStatus.INACTIVE)
     const [message, setmessage] = useState<SavedMessage[]>([])
+
+    const handelGenerateFeedback = async(message:SavedMessage[])=>{
+            console.log("generate here.")
+            const {success,id}={
+                success:true,
+                id:"interview-id"
+            }
+            if(success && id){
+                router.push(`/interview/${interviewId}/feedback`)
+            }
+        }
 
     useEffect(() => {
       const onCallStart=()=>setcallStauts(CallStatus.ACTIVE)
@@ -34,12 +46,16 @@ const Agent = ({ userName,userId,type }: AgentProps) => {
         }
         const onError=(e:Error)=>console.log("message:",e)
 
+        
+
         vapi.on('call-start',onCallStart)
         vapi.on('call-end',onCallEnd)
         vapi.on("speech-start",onSpeachStart)
         vapi.on('speech-end',onSpeachEnd)
         vapi.on('message',onMessage)
         vapi.on('error',onError)
+
+        
 
         return ()=> {
                 vapi.off('call-start',onCallStart)
@@ -53,17 +69,39 @@ const Agent = ({ userName,userId,type }: AgentProps) => {
     }, [])
     
     useEffect(()=>{
-        if(callStatus===CallStatus.FINISHED) router.push('/');
+        if(callStatus===CallStatus.FINISHED){
+            if(type==="generate"){
+                router.push("/interview")
+            }else{
+                handelGenerateFeedback(message)
+            }
+        }
     },[message,callStatus,userId,type])
 
     const handleCall=async()=>{
         setcallStauts(CallStatus.CONNECTING);
-        vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,{
-            variableValues:{
-                username:userName,
-                userid:userId,
+        if(type==="generate"){
+
+            vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,{
+                variableValues:{
+                    username:userName,
+                    userid:userId,
+                }
+            })
+        }
+        else{
+            let formattedQuestions='';
+            if(questions){
+                formattedQuestions=questions
+                .map((question)=> `- ${question}`)
+                .join("\n");
             }
-        })
+            vapi.start(interviewer,{
+                variableValues:{
+                    questions:formattedQuestions,
+                }
+            })
+        }
     }
 
     const handleDisconnect=async()=>{
