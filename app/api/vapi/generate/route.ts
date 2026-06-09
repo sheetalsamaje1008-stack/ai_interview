@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
             // Use generateObject with Zod to STRICTLY force Gemini to return an array of strings
             const { object } = await generateObject({
-                model: google("gemini-3.5-flash"),
+                model: google("gemini-2.5-flash"),
                 schema: z.object({
                     questions: z.array(z.string())
                 }),
